@@ -1,32 +1,40 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { prisma } from "../Db/db.config";
+import { getUserByEmail, postCreateUser } from "./user.service";
+import { StatusCodes } from "http-status-codes";
 
-const userRegistration = async (req: Request, res: Response) => {
+export const userRegistration = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
-    const checkDuplicate = await prisma.user.findFirst({
-      where: {
-        email: email,
-      },
-    });
-    if (checkDuplicate) {
-      return res.status(400).json({
-        success: false,
-        message: "already user exist by this email",
-      });
+    const { name, email } = req.body;
+    if (!name && !email) {
+      // res.status(StatusCodes.BAD_REQUEST).json({
+      //   success: false,
+      //   message: "Email and Name is Required",
+      // });
+      // return
+      throw new Error('email and name is required')
     }
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-      },
+    const checkDuplicate = await getUserByEmail(email);
+    if (checkDuplicate) {
+      // res.status(StatusCodes.CONFLICT).json({
+      //   success: false,
+      //   message: "already user exist by this email",
+      // });
+      throw new Error('already user exist by this email')
+    }
+    const newUser = await postCreateUser({ name, email });
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      message: "User has created",
+      data: newUser,
+      // error: error,
     });
-    res.send({ "user created": newUser });
-  } catch (error) {
-    res.status(500).json({
+  } catch (error: any) {
+    
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "server error",
-      error: error,
+      message: error && error.message ? error.message : "server error",
+      // error: error,
     });
   }
 };
@@ -38,7 +46,7 @@ const userLogin = async (req: Request, res: Response) => {
 };
 
 //User Update
-const userUpdated = async (req: Request, res: Response) => {
+export const userUpdated = async (req: Request, res: Response) => {
   try {
     const { name, email } = req.body;
     const id = Number(req.params.id);
@@ -60,7 +68,7 @@ const userUpdated = async (req: Request, res: Response) => {
 //userDelete
 const userDelete = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params;
+    const { id } = req.params;
     const deleted = await prisma.user.delete({
       where: {
         id: Number(id),
@@ -78,17 +86,9 @@ const allUser = async (req: Request, res: Response) => {
     const alluser = await prisma.user.findMany({
       include: {
         posts: true,
-        comments:true
+        comments: true,
       },
     });
     res.send(allUser);
   } catch (error) {}
-};
-
-module.exports = {
-  userRegistration,
-  userLogin,
-  userUpdated,
-  userDelete,
-  allUser,
 };
