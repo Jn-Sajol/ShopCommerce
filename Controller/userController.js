@@ -35,4 +35,23 @@ const userLogin = async (req, res) => {
   } catch (error) {}
 };
 
+//User Update
+const userUpdated = async (req,res) =>{
+   try {
+    const {name,email} =req.body;
+    const id = req.params;
+    const updated = await prisma.user.update({
+        where:{
+            id:id
+        },
+        data:{
+            name,email
+        }
+    })
+    res.send("new user created", newUser);
+   } catch (error) {
+    res.send(error)
+   }
+}
+
 module.exports = { userRegistration, userLogin };
