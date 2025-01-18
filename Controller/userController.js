@@ -73,10 +73,15 @@ const userDelete = async (req,res) => {
 const allUser = async (req,res) =>{
     try {
         const alluser = await prisma.user.findMany({
-          include:{
-            posts:true,
-            comment:true
-          }  
+         include : {
+          posts:true,
+          comment : true
+         },
+         select:{
+          comment:{
+            startWith:"hello"
+          }
+         }
         })
         res.send(allUser)
     } catch (error) {
