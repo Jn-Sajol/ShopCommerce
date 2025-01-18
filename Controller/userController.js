@@ -54,4 +54,29 @@ const userUpdated = async (req,res) =>{
    }
 }
 
-module.exports = { userRegistration, userLogin };
+//userDelete
+const userDelete = async (req,res) => {
+    try {
+        const id = req.params;
+        const deleted = await prisma.user.delete({
+            where:{
+                id:id
+            },
+        })
+        res.send("user deleted", deleted);
+       } catch (error) {
+        res.send(error)
+       }
+}
+
+//allUser
+const allUser = async (req,res) =>{
+    try {
+        const alluser = await prisma.user.findMany()
+        res.send(allUser)
+    } catch (error) {
+        
+    }
+}
+
+module.exports = { userRegistration, userLogin,userUpdated,userDelete};
