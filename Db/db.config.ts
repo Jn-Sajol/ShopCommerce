@@ -1,6 +1,7 @@
-const {PrismaClient} = require('@prisma/client');
+import { PrismaClient } from "@prisma/client"
 
-const prisma = new PrismaClient({
+
+export const prisma = new PrismaClient({
     log:['query']
 })
 // (async () => {
@@ -11,4 +12,3 @@ const prisma = new PrismaClient({
 //       console.error('Database connection failed:', error);
 //     }
 //   })();
-module.exports = prisma

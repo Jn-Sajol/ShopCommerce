@@ -1,8 +1,9 @@
-const express = require('express');
+import express, {Express} from "express";
 // const { PrismaClient } = require('@prisma/client');
-const bodyParser = require('body-parser');
+// const bodyParser = require('body-parser');
+import bodyParser from 'body-parser'
 
-const app = express();
+const app = express()
 // const prisma = new PrismaClient();
 
 app.use(bodyParser.json());
