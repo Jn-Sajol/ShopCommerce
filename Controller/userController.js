@@ -74,7 +74,8 @@ const allUser = async (req,res) =>{
     try {
         const alluser = await prisma.user.findMany({
           include:{
-            post:true
+            posts:true,
+            comment:true
           }  
         })
         res.send(allUser)
@@ -83,4 +84,4 @@ const allUser = async (req,res) =>{
     }
 }
 
-module.exports = { userRegistration, userLogin,userUpdated,userDelete};
+module.exports = { userRegistration, userLogin,userUpdated,userDelete,allUser};
