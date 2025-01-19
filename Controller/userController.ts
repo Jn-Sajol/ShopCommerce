@@ -2,25 +2,29 @@ import type { Request, Response } from "express";
 import { prisma } from "../Db/db.config";
 import { getUserByEmail, postCreateUser } from "./user.service";
 import { StatusCodes } from "http-status-codes";
-import {hashSync} from "bcrypt"
+import { compare, hashSync } from "bcrypt";
+import jwt from "jsonwebtoken";
 export const userRegistration = async (req: Request, res: Response) => {
   try {
-    const { name, email,password } = req.body;
+    const { name, email, password } = req.body;
     if (!name && !email && !password) {
-      throw new Error('email and name is required')
+      throw new Error("email and name is required");
     }
     const checkDuplicate = await getUserByEmail(email);
     if (checkDuplicate) {
-      throw new Error('already user exist by this email')
+      throw new Error("already user exist by this email");
     }
-    const newUser = await postCreateUser({ name, email,password:hashSync(password,10) });
+    const newUser = await postCreateUser({
+      name,
+      email,
+      password: hashSync(password, 10),
+    });
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: "User has created",
       data: newUser,
     });
   } catch (error: any) {
-    
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error && error.message ? error.message : "server error",
@@ -29,55 +33,43 @@ export const userRegistration = async (req: Request, res: Response) => {
 };
 
 //user Login
-const userLogin = async (req: Request, res: Response) => {
+export const userLogin = async (req: Request, res: Response) => {
   try {
-  } catch (error) {}
-};
-
-//User Update
-export const userUpdated = async (req: Request, res: Response) => {
-  try {
-    const { name, email } = req.body;
-    const id = Number(req.params.id);
-    const updated = await prisma.user.update({
+    const { email, password } = req.body;
+    if (!email && !password) {
+      throw new Error("email and name is required");
+    }
+    const user = await prisma.user.findFirst({
       where: {
-        id,
-      },
-      data: {
-        name,
-        email,
+        email: email,
       },
     });
-    res.send(updated);
-  } catch (error) {
-    res.send(error);
-  }
-};
 
-//userDelete
-const userDelete = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const deleted = await prisma.user.delete({
-      where: {
-        id: Number(id),
+    if (!user) {
+      throw new Error("User not Found");
+    }
+
+    const valid = await compare(password, user.password);
+    if (!valid) {
+      throw new Error("Invalid Credential");
+    }
+
+    const token = jwt.sign({ user_id: user.id }, "secretkey",{expiresIn:'24h'});
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "User Login Successfully",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
       },
+      token: token,
     });
-    res.send(deleted);
-  } catch (error) {
-    res.send(error);
+
+  } catch (error: any) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error && error.message ? error.message : "server error",
+    });
   }
 };
-
-//allUser
-// const allUser = async (req: Request, res: Response) => {
-//   try {
-//     const alluser = await prisma.user.findMany({
-//       include: {
-//         posts: true,
-//         comments: true,
-//       },
-//     });
-//     res.send(allUser);
-//   } catch (error) {}
-// };

@@ -1,8 +1,8 @@
 import express from "express";
-import { userRegistration, userUpdated } from "../Controller/userController";
+import { userLogin, userRegistration } from "../Controller/userController";
 
 export const userRouter = express.Router();
 userRouter.post("/register",  userRegistration);
-userRouter.put("/update/:id",  userUpdated);
+userRouter.put("/login",  userLogin);
 
 
