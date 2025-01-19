@@ -1,13 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { StatusCodes } from "http-status-codes"; // Import status codes
+import { StatusCodes } from "http-status-codes";
+import { prisma } from "../Db/db.config";
+;
 
-// Middleware for user authentication
-export const userAuth = (req: Request, res: Response, next: NextFunction): void => {
+
+export const userAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     // Get token from Authorization header
     const tokenFromHeader = req.headers.authorization;
-
     if (!tokenFromHeader) {
       res.status(StatusCodes.UNAUTHORIZED).json({
         success: false,
@@ -28,10 +33,10 @@ export const userAuth = (req: Request, res: Response, next: NextFunction): void 
     }
 
     // Verify token
-    const secretKey = process.env.JWT_SECRET || "your_default_secret_key"; // Use an environment variable for security
-    const verifyToken = jwt.verify(splitToken, secretKey) as JwtPayload; // Type the result as JwtPayload
+    const secretKey = process.env.JWT_SECRET || "secretkey"; // Use an environment variable for security
+    const verifyToken = jwt.verify(splitToken, secretKey) as JwtPayload;
 
-    if (!verifyToken) {
+    if (!verifyToken || !verifyToken.user_id) {
       res.status(StatusCodes.UNAUTHORIZED).json({
         success: false,
         message: "Invalid token",
@@ -39,31 +44,27 @@ export const userAuth = (req: Request, res: Response, next: NextFunction): void 
       return;
     }
 
-    // Attach user info to the request
-    req.user = verifyToken;
+    // Fetch the user from the database using the user_id from the token
+    const user = await prisma.user.findUnique({
+      where: { id: verifyToken.user_id }, // Assuming your JWT has a `user_id`
+    });
+
+    if (!user) {
+      res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    // Attach the user to the request object
+    // if (user && user !== undefined) {
+      req.user = user; // Here, req.user will be of type `User`
+    // }
 
     // Proceed to the next middleware/route handler
     next();
   } catch (error: any) {
-   
-    // Handle specific JWT errors
-    if (error.name === "JsonWebTokenError") {
-      res.status(StatusCodes.UNAUTHORIZED).json({
-        success: false,
-        message: "Invalid token",
-      });
-      return;
-    }
-
-    if (error.name === "TokenExpiredError") {
-      res.status(StatusCodes.UNAUTHORIZED).json({
-        success: false,
-        message: "Token has expired",
-      });
-      return;
-    }
-
-    // Generic error response for other errors
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Internal server error",
@@ -74,15 +75,11 @@ export const userAuth = (req: Request, res: Response, next: NextFunction): void 
 //Admin AUthentication Check
 
 export const isAdminAuth = async (req: Request, res: Response, next: NextFunction) => {
-  const user = req.user;
-
-  if (user?.role.toLowerCase() !== 'Admin') {  // Correctly checking the role
-    return res.status(403).json({
-      success: false,
-      message: 'You are not an admin',
-    });
+  
+  if (req.user?.role !== 'ADMIN') {  
+   res.send('you are not a admin')
+   return
   }
 
-  next();  // Proceed to the next middleware or route handler
+  next();
 };
-

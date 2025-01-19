@@ -6,7 +6,7 @@ import { compare, hashSync } from "bcrypt";
 import jwt from "jsonwebtoken";
 export const userRegistration = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password ,role} = req.body;
     if (!name && !email && !password) {
       throw new Error("email and name is required");
     }
@@ -17,6 +17,7 @@ export const userRegistration = async (req: Request, res: Response) => {
     const newUser = await postCreateUser({
       name,
       email,
+      role,
       password: hashSync(password, 10),
     });
     res.status(StatusCodes.CREATED).json({
@@ -74,3 +75,8 @@ export const userLogin = async (req: Request, res: Response) => {
   }
 };
 
+
+//check authorize will work or not
+export const me = async (req: Request, res: Response) =>{
+res.send('yes i am the admin')
+}
