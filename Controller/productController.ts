@@ -111,4 +111,31 @@ export const productUpdate = async (req: Request, res: Response) => {
     });
   }
 };
+
+
 //Product Delete
+export const productDelete = async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const product = await prisma.product.delete({
+        where: {
+          id: Number(id),
+        },
+      });
+      if (!product) {
+        res.send("Product not found");
+        return;
+      }
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: "product deleted successfully",
+        product: product,
+      });
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "surver error",
+        error,
+      });
+    }
+  };
