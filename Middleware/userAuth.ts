@@ -3,7 +3,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { StatusCodes } from "http-status-codes"; // Import status codes
 
 // Middleware for user authentication
-const userAuth = (req: Request, res: Response, next: NextFunction): void => {
+export const userAuth = (req: Request, res: Response, next: NextFunction): void => {
   try {
     // Get token from Authorization header
     const tokenFromHeader = req.headers.authorization;
@@ -45,8 +45,7 @@ const userAuth = (req: Request, res: Response, next: NextFunction): void => {
     // Proceed to the next middleware/route handler
     next();
   } catch (error: any) {
-    console.error("JWT verification error:", error.message);
-
+   
     // Handle specific JWT errors
     if (error.name === "JsonWebTokenError") {
       res.status(StatusCodes.UNAUTHORIZED).json({
@@ -72,4 +71,18 @@ const userAuth = (req: Request, res: Response, next: NextFunction): void => {
   }
 };
 
-export { userAuth };
+//Admin AUthentication Check
+
+export const isAdminAuth = async (req: Request, res: Response, next: NextFunction) => {
+  const user = req.user;
+
+  if (user?.role.toLowerCase() !== 'Admin') {  // Correctly checking the role
+    return res.status(403).json({
+      success: false,
+      message: 'You are not an admin',
+    });
+  }
+
+  next();  // Proceed to the next middleware or route handler
+};
+
