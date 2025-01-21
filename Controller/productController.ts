@@ -3,9 +3,15 @@ import { prisma } from "../Db/db.config";
 import { StatusCodes } from "http-status-codes";
 
 //Product Create
-export const productCreate = async (req: Request, res: Response) => {
+interface ProductCreateRequestBody {
+  name: string;
+  description: string;
+  tag: string;
+  price: number; // Assuming you also need price
+}
+export const productCreate = async (req: Request<{},{},ProductCreateRequestBody>, res: Response) => {
   try {
-    const { name, description, tag } = req.body;
+    const { name, description, tag, price } = req.body;
     if (!name || !description || !tag) {
       res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
@@ -14,12 +20,13 @@ export const productCreate = async (req: Request, res: Response) => {
       return;
     }
     const product = await prisma.product.create({
-      data: {
-        name,
-        description,
-        tag,
-      },
-    });
+      data:{
+          name,
+          description,
+          tag,
+          price
+      }
+    })
     res.status(StatusCodes.OK).json({
       success: true,
       message: "product create successfully",
@@ -41,6 +48,7 @@ export const productGetAll = async (req: Request, res: Response) => {
     res.status(StatusCodes.OK).json({
       success: true,
       message: "product Gett successfully",
+      count: product.length,
       product: product,
     });
   } catch (error) {
