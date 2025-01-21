@@ -11,6 +11,7 @@ interface ProductCreateRequestBody {
 }
 export const productCreate = async (req: Request<{},{},ProductCreateRequestBody>, res: Response) => {
   try {
+    const user = req.user
     const { name, description, tag, price } = req.body;
     if (!name || !description || !tag) {
       res.status(StatusCodes.BAD_REQUEST).json({
@@ -24,7 +25,8 @@ export const productCreate = async (req: Request<{},{},ProductCreateRequestBody>
           name,
           description,
           tag,
-          price
+          price,
+          user_id:Number(user?.id)
       }
     })
     res.status(StatusCodes.OK).json({
@@ -44,7 +46,7 @@ export const productCreate = async (req: Request<{},{},ProductCreateRequestBody>
 //Product Get All
 export const productGetAll = async (req: Request, res: Response) => {
   try {
-    const product = await prisma.product.findMany();
+    const product = await prisma.product.findMany()
     res.status(StatusCodes.OK).json({
       success: true,
       message: "product Gett successfully",
@@ -63,11 +65,16 @@ export const productGetAll = async (req: Request, res: Response) => {
 //Product Get Single
 export const ProductGetSingle = async (req: Request, res: Response) => {
   try {
+    // const user = req.user;
     const id = req.params.id;
     const product = await prisma.product.findFirst({
       where: {
         id: Number(id),
       },
+      include:{
+        user:true,
+        adress: true,
+      }
     });
     if (!product) {
       res.send("Product not found");

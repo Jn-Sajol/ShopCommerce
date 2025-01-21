@@ -20,32 +20,37 @@ enum Role {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
+  id       Int       @id @default(autoincrement())
   name     String
-  email    String   @unique
+  email    String    @unique
   password String
-  role     Role     @default(USER)
+  role     Role      @default(USER)
+  product  Product[]
   adress   Adress[]
-
 }
 
 model Product {
   id          Int      @id @default(autoincrement())
+  user        User    @relation(fields: [user_id], references: [id])
+  user_id     Int
   name        String
   description String   @db.Text
   tag         String
   price       Int
   createAt    DateTime @default(now())
   updateAt    DateTime @updatedAt
+  adress      Adress[]
 }
 
 model Adress {
-  id      Int    @id @default(autoincrement())
-  lineOne String
-  lineTwo String
-  city    String
-  country String
-  pincode String
-  userId  Int
-  user    User   @relation(fields: [userId], references: [id])
+  id         Int     @id @default(autoincrement())
+  lineOne    String
+  lineTwo    String
+  city       String
+  country    String
+  pincode    String
+  user_id    Int
+  user       User    @relation(fields: [user_id], references: [id])
+  product_id Int
+  product    Product @relation(fields: [product_id], references: [id])
 }

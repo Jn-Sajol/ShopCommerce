@@ -4,9 +4,11 @@ import { getUserByEmail, postCreateUser } from "./user.service";
 import { StatusCodes } from "http-status-codes";
 import { compare, hashSync } from "bcrypt";
 import jwt from "jsonwebtoken";
+import { Role } from "@prisma/client";
 export const userRegistration = async (req: Request, res: Response) => {
   try {
-    const { name, email, password ,role} = req.body;
+    const { name, email, password, role } = req.body;
+    console.log(role)
     if (!name && !email && !password) {
       throw new Error("email and name is required");
     }
@@ -14,16 +16,24 @@ export const userRegistration = async (req: Request, res: Response) => {
     if (checkDuplicate) {
       throw new Error("already user exist by this email");
     }
+    const normalizedRole = role?.toUpperCase();
+    console.log("Normalized role:", normalizedRole);
+
     const newUser = await postCreateUser({
       name,
       email,
-      role,
+      role:normalizedRole as Role,
       password: hashSync(password, 10),
     });
+    
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: "User has created",
-      data: newUser,
+      user: {
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      },
     });
   } catch (error: any) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -55,7 +65,9 @@ export const userLogin = async (req: Request, res: Response) => {
       throw new Error("Invalid Credential");
     }
 
-    const token = jwt.sign({ user_id: user.id }, "secretkey",{expiresIn:'24h'});
+    const token = jwt.sign({ user_id: user.id }, "secretkey", {
+      expiresIn: "24h",
+    });
     res.status(StatusCodes.OK).json({
       success: true,
       message: "User Login Successfully",
@@ -66,7 +78,6 @@ export const userLogin = async (req: Request, res: Response) => {
       },
       token: token,
     });
-
   } catch (error: any) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
@@ -75,8 +86,7 @@ export const userLogin = async (req: Request, res: Response) => {
   }
 };
 
-
 //check authorize will work or not
-export const me = async (req: Request, res: Response) =>{
-res.send('yes i am the admin')
-}
+export const me = async (req: Request, res: Response) => {
+  res.send("yes i am the admin");
+};
